@@ -1,0 +1,17 @@
+# Excel Anomaly Agent — persisted settings.
+# Edit this file directly, or use the "Settings" sidebar in the app (which saves back here).
+
+high_risk:
+  column: null          # e.g. "Department" — the column to check for high-risk values
+  values: []             # e.g. ["Finance", "Executive Travel"]
+
+ollama:
+  enabled: true
+  host: "http://localhost:11434"
+  model: "llama3.1"      # change to whatever model you've pulled, e.g. "mistral", "phi3", "qwen2.5"
+  timeout_seconds: 30
+
+detection:
+  zscore_threshold: 3.0
+  iqr_multiplier: 1.5
+  contamination: 0.05    # expected fraction of anomalous rows, used by Isolation Forest

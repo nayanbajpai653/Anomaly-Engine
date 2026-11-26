@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="nordic">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Quality &amp; Business Analysis Studio — Anomaly Engine</title>
+  <link rel="stylesheet" href="style.css?v=18.0" />
+</head>
+<body class="studio-page-body">
+  <header class="studio-header">
+    <div class="studio-header-left">
+      <button type="button" class="btn-back-to-report" id="btn-back-to-report" title="Return to Anomaly Report">
+        ⬅ Back to Anomaly Report
+      </button>
+    </div>
+    <div class="studio-header-center">
+      <h1 class="studio-title">📋 Data Quality &amp; Business Analysis Studio</h1>
+      <span class="studio-subtitle">Dataset integrity health audit, missing cell diagnostic &amp; executive KPI metrics</span>
+    </div>
+    <div class="studio-header-right">
+      <span class="studio-dataset-pill" id="dataset-name-pill">Loading dataset…</span>
+    </div>
+  </header>
+
+  <main class="studio-main-container">
+    <!-- Error / No Session State -->
+    <div id="studio-error-state" class="studio-error-card hidden">
+      <div class="error-icon">⚠️</div>
+      <h2 id="studio-error-title">No Active Dataset Session</h2>
+      <p id="studio-error-msg">Please return to the Anomaly Report to upload a spreadsheet first.</p>
+      <button type="button" class="btn-back-to-report" id="btn-error-back">⬅ Return to Anomaly Report</button>
+    </div>
+
+    <div id="analysis-main-content">
+      <!-- Executive Summary Cards: Health Score + Business KPIs -->
+      <section class="analysis-executive-grid">
+        <!-- Health Score Card -->
+        <div class="analysis-hero-card">
+          <div class="card-top-tag">
+            <span class="tag-title">DATA INTEGRITY SCORE</span>
+            <span class="health-badge" id="analysis-health-badge">Analyzing…</span>
+          </div>
+          <div class="health-score-container">
+            <div class="health-score-dial">
+              <div class="health-score-value" id="analysis-health-score">--%</div>
+              <div class="health-score-label">Overall Integrity</div>
+            </div>
+            <div class="health-details-list" id="analysis-health-details"></div>
+          </div>
+        </div>
+
+        <!-- Business KPIs Card -->
+        <div class="analysis-hero-card kpi-hero-card">
+          <div class="card-top-tag">
+            <span class="tag-title">💼 EXECUTIVE BUSINESS KPIS</span>
+            <span class="kpi-auto-tag">Auto-Calculated</span>
+          </div>
+          <div class="kpis-grid" id="analysis-kpis-grid"></div>
+        </div>
+      </section>
+
+      <!-- Column Distribution Profiling Section -->
+      <section class="analysis-table-section">
+        <div class="table-section-header">
+          <div>
+            <h2 class="table-section-title">📊 Parameter &amp; Column Distribution Profiling</h2>
+            <p class="table-section-desc">Audit each column's completeness, distinct values, and statistical distributions</p>
+          </div>
+          <div class="table-header-controls">
+            <input type="text" id="col-search-input" class="col-search-box" placeholder="🔍 Search columns…" />
+            <div class="table-filter-chips" id="analysis-col-filters">
+              <button type="button" class="col-filter-chip active" data-col-filter="all">All (<span id="col-filter-count-all">0</span>)</button>
+              <button type="button" class="col-filter-chip" data-col-filter="numeric">Numeric (<span id="col-filter-count-num">0</span>)</button>
+              <button type="button" class="col-filter-chip" data-col-filter="categorical">Categorical (<span id="col-filter-count-cat">0</span>)</button>
+              <button type="button" class="col-filter-chip" data-col-filter="issues">Missing/Nulls (<span id="col-filter-count-issues">0</span>)</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="analysis-table-wrap">
+          <table class="analysis-table" id="analysis-table">
+            <thead>
+              <tr>
+                <th>Column Name</th>
+                <th>Type</th>
+                <th>Completeness</th>
+                <th>Missing / Corrupted</th>
+                <th>Distinct Values</th>
+                <th>Summary Statistics &amp; Distributions</th>
+              </tr>
+            </thead>
+            <tbody id="analysis-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="analysis.js?v=18.0"></script>
+</body>
+</html>

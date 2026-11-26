@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel Anomaly Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="style.css?v=17.0">
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">⚙️ Settings</div>
+
+    <section class="side-section">
+      <h3>Detection mode</h3>
+      <div class="segmented" id="mode-toggle">
+        <button class="segment active" data-mode="auto" type="button">Auto</button>
+        <button class="segment" data-mode="manual" type="button">Manual</button>
+      </div>
+      <p class="hint" id="mode-hint">Thresholds are derived from your data automatically — nothing to set here.</p>
+
+      <div id="manual-controls" class="manual-controls hidden">
+        <label class="field-label" style="margin-top: 14px;">Sensitivity Preset</label>
+        <div class="preset-grid" id="preset-buttons">
+          <button class="preset-btn" data-preset="strict" type="button">Strict</button>
+          <button class="preset-btn active" data-preset="balanced" type="button">Balanced</button>
+          <button class="preset-btn" data-preset="sensitive" type="button">Sensitive</button>
+          <button class="preset-btn" data-preset="aggressive" type="button">High</button>
+        </div>
+
+        <label class="field-label">Z-score threshold <span id="z-val">3.0</span></label>
+        <input type="range" id="z-slider" min="1.5" max="5" step="0.1" value="3.0">
+
+        <label class="field-label">IQR multiplier <span id="iqr-val">1.5</span></label>
+        <input type="range" id="iqr-slider" min="1" max="3" step="0.1" value="1.5">
+
+        <label class="field-label">Expected anomaly fraction <span id="contam-val">5%</span></label>
+        <input type="range" id="contam-slider" min="0.01" max="0.25" step="0.01" value="0.05">
+
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">High spikes only</div>
+            <div class="toggle-sub">Flag high spend, ignore low values</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="high-spikes-toggle" checked>
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <div class="hidden">
+      <input type="checkbox" id="ollama-toggle" checked>
+      <div id="ollama-fields"></div>
+      <input type="text" id="ollama-host" value="http://localhost:11434">
+      <input type="text" id="ollama-model" value="llama3.1">
+      <select id="hr-column"></select>
+      <div id="hr-values"></div>
+      <button id="save-settings" type="button"></button>
+      <p id="save-status"></p>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="hero">
+      <div>
+        <p class="hero-title">📊 Anomaly Agent</p>
+        <p class="hero-sub">Upload a file, let it find the anomalies — tune it yourself only if you want to.</p>
+      </div>
+      <div class="status-pill">Running locally</div>
+    </div>
+
+    <div class="card upload-card" id="dropzone">
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" hidden>
+      <div class="upload-inner">
+        <div class="upload-icon">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <p class="upload-text-main"><strong>Click to upload</strong> or drag a file here</p>
+        <p class="hint">Supports .xlsx, .xls, or .csv</p>
+        <div class="sample-btn-wrap">
+          <button type="button" class="btn-sample" id="load-sample-btn">⚡ Or try with sample expense data (400 rows)</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="sheet-picker-wrap" class="card hidden">
+      <label class="field-label">This file has multiple sheets — pick one</label>
+      <select id="sheet-picker"></select>
+    </div>
+
+    <div id="data-section" class="hidden">
+      <div class="data-header-bar">
+        <p class="meta-line" id="row-col-count"></p>
+        <button type="button" class="btn-analysis-preview-toggle" id="btn-toggle-analysis-preview">📋 Open Data Analysis Studio ↗</button>
+      </div>
+      <div class="table-wrap"><table id="preview-table"></table></div>
+
+      <label class="field-label">Numeric columns to analyze</label>
+      <div id="numeric-checks" class="chip-grid"></div>
+
+      <label class="field-label">Row identifier <span class="optional-tag">optional</span></label>
+      <select id="id-column"><option value="">(row number)</option></select>
+
+      <button class="btn btn-primary" id="run-btn" type="button">🔍 Run Anomaly Detection</button>
+      <p class="hint" id="auto-caption"></p>
+    </div>
+
+    <div id="loading" class="hidden loading">
+      <div class="spinner"></div>
+      <span id="loading-text">Detecting anomalies…</span>
+    </div>
+
+    <div id="empty-result" class="card hidden"></div>
+
+    <div id="results-section" class="hidden">
+      <div class="metric-row" id="metric-row"></div>
+
+      <div class="visual-panel" id="visual-panel">
+        <div class="visual-panel-header">
+          <div>
+            <div class="visual-panel-title">📊 Anomaly Distribution by Category</div>
+            <div class="visual-panel-subtitle">Categories with the highest concentration of flagged rows</div>
+          </div>
+          <div class="visual-panel-badge" id="risk-rating-badge">INSIGHTS</div>
+        </div>
+        <div class="breakdown-bars" id="breakdown-bars"></div>
+      </div>
+
+      <div id="results-summary" class="results-summary-box"></div>
+
+      <div class="filter-toolbar">
+        <span class="filter-label">Filter:</span>
+        <div class="filter-chips" id="filter-chips">
+          <button class="filter-chip active" data-filter="all" type="button">All (<span id="count-all">0</span>)</button>
+          <button class="filter-chip" data-filter="high" type="button">🚨 High Confidence (<span id="count-high">0</span>)</button>
+          <button class="filter-chip" data-filter="medium" type="button">⚠️ Medium Confidence (<span id="count-medium">0</span>)</button>
+          <button class="filter-chip" data-filter="excluded" type="button">⚪ Deselected (<span id="count-excluded">0</span>)</button>
+        </div>
+        <div class="bulk-actions">
+          <button type="button" class="btn-bulk btn-analysis-toggle" id="btn-toggle-analysis-results" title="Open data quality & executive business KPI studio in a new tab">📋 Data Analysis ↗</button>
+          <button type="button" class="btn-bulk btn-visual-toggle" id="btn-toggle-visuals" title="Open interactive parameter visual explorer in a new tab">📊 Visual Analytics ↗</button>
+          <button type="button" class="btn-bulk" id="bulk-select-all">Select All</button>
+          <button type="button" class="btn-bulk" id="bulk-deselect-all">Deselect All</button>
+          <button type="button" class="btn-bulk btn-ai-action" id="bulk-ai-top" title="Run instant business audit insights for the top 3 critical anomalies">✨ AI Audit Top 3</button>
+        </div>
+      </div>
+
+      <!-- Quick Anomaly Numbers Bar -->
+      <div class="anomaly-numbers-bar" id="anomaly-numbers-bar">
+        <div class="numbers-bar-header">
+          <span class="numbers-bar-title">📍 <strong>Detected Anomaly Rows:</strong> Tap row numbers to show details below</span>
+          <div class="numbers-bar-actions">
+            <button type="button" class="btn-text-action" id="btn-show-all">Show All</button>
+            <span class="action-sep">•</span>
+            <button type="button" class="btn-text-action" id="btn-hide-all">Hide All</button>
+          </div>
+        </div>
+        <div class="numbers-chips-container" id="numbers-chips"></div>
+      </div>
+
+      <div id="anomaly-list"></div>
+      
+      <div class="download-actions">
+        <a class="btn btn-primary" id="download-btn" href="#">⬇ Highlighted report</a>
+        <a class="btn btn-secondary" id="download-clean-btn" href="#">⬇ Clean data</a>
+        <a class="btn btn-secondary" id="download-anomalies-btn" href="#">⬇ Anomalies only</a>
+      </div>
+
+      <!-- Guidance Section Under Download Buttons: Visual Analytics & Data Analysis -->
+      <div class="tools-guidance-container" id="tools-guidance-container">
+        <!-- Visual Analytics Guide Card -->
+        <div class="tool-guide-card guide-visuals">
+          <div class="tool-guide-main">
+            <span class="tool-guide-icon">📈</span>
+            <div class="tool-guide-text">
+              <span class="tool-guide-tag tag-visuals">Visual Exploration</span>
+              <div class="tool-guide-desc">
+                <strong>For visual explanation:</strong> You can explore every parameter, view anomaly clusters, and inspect any data point back to its original row in a dedicated studio using 
+                <button type="button" class="link-inline-btn" id="link-open-visuals">Visual Analytics Studio ↗</button>.
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-open-visuals-cta" id="btn-open-visuals-cta">
+            📊 Open Visual Analytics ↗
+          </button>
+        </div>
+
+        <!-- Data Analysis Guide Card -->
+        <div class="tool-guide-card guide-analysis">
+          <div class="tool-guide-main">
+            <span class="tool-guide-icon">📋</span>
+            <div class="tool-guide-text">
+              <span class="tool-guide-tag tag-analysis">Quality &amp; Business Metrics</span>
+              <div class="tool-guide-desc">
+                <strong>For data analysis:</strong> You can audit data integrity score, review missing or corrupted cell counts, and inspect executive business KPIs in a dedicated studio using 
+                <button type="button" class="link-inline-btn link-analysis-inline" id="link-open-analysis">Data Analysis Studio ↗</button>.
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-open-analysis-cta" id="btn-open-analysis-cta">
+            📋 Open Data Analysis ↗
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+</div>
+<script src="chart.umd.min.js"></script>
+<script src="app.js?v=18.0"></script>
+</body>
+</html>

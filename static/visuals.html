@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="nordic">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visual Analytics Studio — Anomaly Engine</title>
+  <link rel="stylesheet" href="style.css?v=18.0" />
+</head>
+<body class="studio-page-body">
+  <header class="studio-header">
+    <div class="studio-header-left">
+      <button type="button" class="btn-back-to-report" id="btn-back-to-report" title="Return to Anomaly Report">
+        ⬅ Back to Anomaly Report
+      </button>
+    </div>
+    <div class="studio-header-center">
+      <h1 class="studio-title">📈 Visual Analytics Studio</h1>
+      <span class="studio-subtitle">Multi-parameter cluster analysis &amp; interactive point inspection</span>
+    </div>
+    <div class="studio-header-right">
+      <span class="studio-dataset-pill" id="dataset-name-pill">Loading dataset…</span>
+    </div>
+  </header>
+
+  <main class="studio-main-container">
+    <!-- Controls Toolbar -->
+    <div class="studio-controls-bar">
+      <div class="studio-control-group">
+        <label for="chart-x-col">X-Axis Parameter:</label>
+        <select id="chart-x-col" class="chart-select"></select>
+      </div>
+      <div class="studio-control-group">
+        <label for="chart-y-col">Y-Axis Parameter:</label>
+        <select id="chart-y-col" class="chart-select"></select>
+      </div>
+      <div class="studio-filter-group" id="chart-filter-buttons">
+        <button type="button" class="legend-btn btn-all active" data-chart-filter="all" title="Show all points">All Points</button>
+        <button type="button" class="legend-btn btn-high" data-chart-filter="high" title="Show only high confidence anomalies">🔴 High Anomaly</button>
+        <button type="button" class="legend-btn btn-med" data-chart-filter="med" title="Show only medium confidence anomalies">🟡 Med Anomaly</button>
+        <button type="button" class="legend-btn btn-normal" data-chart-filter="normal" title="Show only normal records">🔵 Normal Record</button>
+      </div>
+      <div class="studio-controls-tip">
+        <span>💡 Click any dot on the chart to inspect row details</span>
+      </div>
+    </div>
+
+    <!-- Error / No Session State -->
+    <div id="studio-error-state" class="studio-error-card hidden">
+      <div class="error-icon">⚠️</div>
+      <h2 id="studio-error-title">No Active Dataset Session</h2>
+      <p id="studio-error-msg">Please return to the Anomaly Report to upload a spreadsheet or run anomaly detection first.</p>
+      <button type="button" class="btn-back-to-report" id="btn-error-back">⬅ Return to Anomaly Report</button>
+    </div>
+
+    <!-- Studio Content Grid: Left Chart + Right Inspector -->
+    <div class="studio-grid" id="studio-content-grid">
+      <!-- Chart Column -->
+      <div class="studio-chart-wrapper">
+        <canvas id="parameter-scatter-canvas"></canvas>
+      </div>
+
+      <!-- Inspector Column -->
+      <aside class="studio-inspector-panel">
+        <div class="inspector-card-header">
+          <div>
+            <div class="inspector-card-title">🔍 Row Inspector</div>
+            <div class="inspector-card-subtitle">Real-time parameters &amp; audit findings</div>
+          </div>
+          <span class="inspector-badge badge-normal" id="inspector-status-badge">Select a Point</span>
+        </div>
+
+        <div class="inspector-empty-state" id="inspector-empty">
+          <div class="empty-icon">🎯</div>
+          <h3>Select Any Point on the Chart</h3>
+          <p>Click any normal or flagged dot on the scatter plot to inspect its exact Excel row number, parameter breakdown, and AI audit notes.</p>
+        </div>
+
+        <div class="inspector-details-wrap hidden" id="inspector-content">
+          <div class="inspector-row-headline">
+            <h2 id="inspector-row-title">Excel Row --</h2>
+            <span class="inspector-row-sub" id="inspector-row-sub"></span>
+          </div>
+
+          <!-- Anomaly Diagnosis Box if flagged -->
+          <div class="inspector-diagnosis-box hidden" id="inspector-diagnosis-box">
+            <div class="diag-header">⚡ Detection Diagnosis</div>
+            <div class="diag-content" id="inspector-diagnosis-text"></div>
+          </div>
+
+          <!-- Parameter Values Grid -->
+          <div class="inspector-values-section">
+            <div class="values-section-title">Row Parameters &amp; Values</div>
+            <div class="inspector-stats-grid" id="inspector-stats-grid"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script src="chart.umd.min.js"></script>
+  <script src="visuals.js?v=18.0"></script>
+</body>
+</html>
